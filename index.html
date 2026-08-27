@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jhojan Ramos · CV Arcade</title>
+  <meta name="description" content="Hoja de vida interactiva de Jhojan Ramos — Ingeniero de Sistemas, fundador de Meltdown, Angel Ambassador de Binance y docente. Explora una sala arcade 3D." />
+  <meta property="og:title" content="Jhojan Ramos · CV Arcade" />
+  <meta property="og:description" content="Hoja de vida interactiva en 3D. Explora la sala arcade y descubre el perfil de Jhojan Ramos." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.167.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.167.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="canvas" tabindex="0" aria-label="Sala arcade 3D interactiva. Usa Tab para navegar entre cabinas, Enter para abrirlas."></canvas>
+
+  <!-- Vignette y Corner Brackets (Addendum R3, Sec. 4) -->
+  <div id="vignette" aria-hidden="true"></div>
+  <div class="corner-bracket top-left" aria-hidden="true"></div>
+  <div class="corner-bracket top-right" aria-hidden="true"></div>
+  <div class="corner-bracket bottom-left" aria-hidden="true"></div>
+  <div class="corner-bracket bottom-right" aria-hidden="true"></div>
+
+  <div id="loading-screen" role="status" aria-live="polite">
+    <div class="loading-content">
+      <div class="loading-title">CARGANDO SALA...</div>
+      <div class="loading-bar-container">
+        <div id="loading-progress" class="loading-bar-fill"></div>
+      </div>
+      <div id="loading-percent" class="loading-percent">0%</div>
+    </div>
+  </div>
+
+  <header id="hud" aria-label="Información del perfil">
+    <div id="hud-name">Jhojan Ramos</div>
+    <div id="hud-role">Ingeniero de Sistemas</div>
+    <div id="hud-location">
+      <span class="dot" aria-hidden="true"></span>
+      Cali, Colombia
+    </div>
+    <div id="hud-instruction" aria-label="Instrucciones de navegación">
+      MUÉVETE POR LA SALA · ELIGE TU SIGUIENTE NIVEL
+    </div>
+  </header>
+
+  <!-- Navegación y Affordance Móvil (Addendum R5) -->
+  <nav id="mobile-nav" aria-label="Navegación entre cabinas">
+    <button id="btn-prev-cab" aria-label="Cabina anterior">◀</button>
+    <button id="btn-next-cab" aria-label="Cabina siguiente">▶</button>
+  </nav>
+  <div id="mobile-tap-hint" role="button" tabindex="0" aria-label="Toca para entrar a esta cabina">TOCA PARA ENTRAR</div>
+
+  <div id="focus-overlay" aria-hidden="true"></div>
+
+  <div id="panel" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="panel-title">
+    <div id="panel-inner">
+      <button id="panel-close" aria-label="Cerrar panel">✕</button>
+      <div id="panel-eyebrow"></div>
+      <h2 id="panel-title"></h2>
+      <p id="panel-body"></p>
+      <ul id="panel-bullets"></ul>
+    </div>
+  </div>
+
+  <div id="no-webgl" hidden role="alert">
+    <p>Tu navegador no soporta esta experiencia, por favor actualízalo.</p>
+  </div>
+
+  <script type="module" src="./js/scene.js"></script>
+</body>
+</html>
