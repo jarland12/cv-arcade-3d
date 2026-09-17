@@ -256,6 +256,10 @@ function enterVault() {
       controls.target.copy(target.look);
       controls.update();
 
+      // Niebla adaptada al vault (cuarto cerrado sin clipping en las esquinas)
+      scene.fog.near = 8.0;
+      scene.fog.far = 28.0;
+
       // Mostrar botón de salida
       if (btnVaultExit) btnVaultExit.hidden = false;
 
@@ -278,6 +282,10 @@ function exitVault() {
       activeRoom = 'main';
       _exitActivatingFlag = false;
       canvas.style.cursor = 'grab';
+
+      // Restaurar niebla de la sala principal
+      scene.fog.near = 4.0;
+      scene.fog.far = 17.5;
 
       camera.position.copy(initialCameraPos);
       controls.target.copy(initialControlsTarget);
