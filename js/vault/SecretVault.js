@@ -203,6 +203,359 @@ function createExitSignTexture() {
   return texture;
 }
 
+// ─── Pantalla CRT Animada en Loop (slides de MELTDOWN) ───────────────────────
+function createCRTLoopTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 384;
+  const ctx = canvas.getContext('2d');
+
+  // Slides que se muestran en ciclo (simula "clips mudos" de MELTDOWN)
+  const slides = [
+    {
+      header: 'MELTDOWN CALI 🕹️',
+      headerColor: '#ff2fb0',
+      lines: [
+        { label: 'FUNDADO',    value: '2022', color: '#f0b43c' },
+        { label: 'EVENTOS',    value: '40+',  color: '#28e8d8' },
+        { label: 'COMUNIDAD',  value: '500+', color: '#c084fc' },
+        { label: 'UBICACIÓN',  value: 'CALI', color: '#3ddc84' },
+      ],
+      footer: '· BAR & CRYPTO LOUNGE ·',
+    },
+    {
+      header: 'BINANCE ANGEL 🌐',
+      headerColor: '#f0b43c',
+      lines: [
+        { label: 'PROGRAMA',  value: 'ANGEL',   color: '#f0b43c' },
+        { label: 'ROL',       value: 'LATAM',   color: '#28e8d8' },
+        { label: 'ALCANCE',   value: 'GLOBAL',  color: '#c084fc' },
+        { label: 'STATUS',    value: 'ACTIVO',  color: '#3ddc84' },
+      ],
+      footer: '· AMBASSADOR OFICIAL ·',
+    },
+    {
+      header: 'DOCENTE & DEV 💻',
+      headerColor: '#28e8d8',
+      lines: [
+        { label: 'INSTITUC.',  value: 'UNIGRAN', color: '#ff2fb0' },
+        { label: 'LENGUAJES',  value: 'C++ / PY', color: '#28e8d8' },
+        { label: 'HARDWARE',   value: 'ESP32',   color: '#f0b43c' },
+        { label: 'IA & BOTS',  value: '2024',    color: '#c084fc' },
+      ],
+      footer: '· INGENIERÍA · ROBÓTICA ·',
+    },
+  ];
+
+  let currentSlide = 0;
+  let lastSlideTime = 0;
+  const slideDuration = 4.0; // segundos por slide
+
+  function renderSlide(slide, time) {
+    ctx.fillStyle = '#040210';
+    ctx.fillRect(0, 0, 512, 384);
+
+    // Scanlines CRT
+    ctx.fillStyle = 'rgba(0,0,0,0.30)';
+    for (let y = 0; y < 384; y += 4) ctx.fillRect(0, y, 512, 2);
+
+    // Marco exterior
+    ctx.strokeStyle = slide.headerColor;
+    ctx.lineWidth = 8;
+    ctx.strokeRect(6, 6, 500, 372);
+
+    // Parpadeo leve de todo el marco (simula CRT)
+    const flicker = 0.92 + Math.sin(time * 47) * 0.04;
+    ctx.globalAlpha = flicker;
+
+    // Header
+    ctx.fillStyle = '#0c0820';
+    ctx.fillRect(14, 14, 484, 52);
+    ctx.fillStyle = slide.headerColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '900 16px "Press Start 2P", monospace';
+    ctx.fillText(slide.header, 256, 40);
+
+    // Separator
+    ctx.strokeStyle = slide.headerColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(20, 74); ctx.lineTo(492, 74); ctx.stroke();
+
+    // Filas de datos
+    slide.lines.forEach((row, i) => {
+      const rowY = 115 + i * 60;
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0)';
+      ctx.fillRect(18, rowY - 18, 476, 42);
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#9e94c2';
+      ctx.font = '11px "Press Start 2P", monospace';
+      ctx.fillText(row.label, 30, rowY + 4);
+
+      ctx.textAlign = 'right';
+      ctx.fillStyle = row.color;
+      ctx.font = '900 14px "Press Start 2P", monospace';
+      ctx.fillText(row.value, 490, rowY + 4);
+    });
+
+    // Barra de progreso del slide
+    const prog = ((time - lastSlideTime) % slideDuration) / slideDuration;
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(18, 358, 476, 10);
+    ctx.fillStyle = slide.headerColor;
+    ctx.fillRect(18, 358, 476 * prog, 10);
+
+    // Footer
+    ctx.fillStyle = '#5e5880';
+    ctx.textAlign = 'center';
+    ctx.font = '9px "Press Start 2P", monospace';
+    ctx.fillText(slide.footer, 256, 347);
+
+    ctx.globalAlpha = 1.0;
+  }
+
+  renderSlide(slides[0], 0);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+
+  return {
+    texture,
+    update(time) {
+      if (time - lastSlideTime >= slideDuration) {
+        lastSlideTime = time;
+        currentSlide = (currentSlide + 1) % slides.length;
+      }
+      renderSlide(slides[currentSlide], time);
+      texture.needsUpdate = true;
+    },
+  };
+}
+
+// ─── Póster Ambiental: Estilo Jaime Garzón (memorabilia MELTDOWN) ─────────────
+function createGarzonPosterTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 704;
+  const ctx = canvas.getContext('2d');
+
+  function draw() {
+    // Fondo color periódico amarillento-envejecido
+    ctx.fillStyle = '#e8ddb8';
+    ctx.fillRect(0, 0, 512, 704);
+
+    // Bordes de papel viejo
+    ctx.strokeStyle = '#8b6c3a';
+    ctx.lineWidth = 12;
+    ctx.strokeRect(6, 6, 500, 692);
+    ctx.strokeStyle = '#6b4c2a';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(16, 16, 480, 672);
+
+    // Cabecera estilo periódico
+    ctx.fillStyle = '#1a0a00';
+    ctx.fillRect(22, 22, 468, 70);
+    ctx.fillStyle = '#e8ddb8';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '900 18px "Press Start 2P", serif';
+    ctx.fillText('EL CUADERNO', 256, 48);
+    ctx.font = '10px "Press Start 2P", monospace';
+    ctx.fillText('DE LA CRIPTO', 256, 72);
+
+    // Fecha estilo encabezado de columna
+    ctx.fillStyle = '#3a1a00';
+    ctx.font = '8px "JetBrains Mono", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('CALI · COLOMBIA · 2024', 26, 108);
+    ctx.textAlign = 'right';
+    ctx.fillText('ED. MELTDOWN Nº1', 486, 108);
+
+    // Linea separadora
+    ctx.strokeStyle = '#3a1a00';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(22, 114); ctx.lineTo(490, 114); ctx.stroke();
+
+    // "Ilustración" — Personaje con sombrero estilo Garzón en pixel art abstracto
+    ctx.fillStyle = '#2a1400';
+    // Sombrero
+    ctx.fillRect(180, 130, 152, 18);
+    ctx.fillRect(196, 112, 120, 22);
+    // Cabeza
+    ctx.fillStyle = '#c8a068';
+    ctx.fillRect(196, 150, 120, 90);
+    // Ojos
+    ctx.fillStyle = '#1a0a00';
+    ctx.fillRect(216, 170, 16, 14);
+    ctx.fillRect(280, 170, 16, 14);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(220, 173, 6, 5);
+    ctx.fillRect(284, 173, 6, 5);
+    // Bigote
+    ctx.fillStyle = '#2a1400';
+    ctx.fillRect(224, 208, 64, 8);
+    // Corbatín
+    ctx.fillStyle = '#ff2fb0';
+    ctx.fillRect(240, 240, 32, 20);
+    ctx.fillRect(248, 255, 16, 28);
+    // Traje
+    ctx.fillStyle = '#0a0a14';
+    ctx.fillRect(164, 268, 184, 130);
+    ctx.fillStyle = '#e8ddb8';
+    ctx.fillRect(218, 268, 76, 80);
+
+    // Bocadillo / burbuja de texto
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#2a1400';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(380, 200, 90, 50, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    // Pico de bocadillo
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(320, 230); ctx.lineTo(295, 260); ctx.lineTo(340, 240);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#1a0a00';
+    ctx.textAlign = 'center';
+    ctx.font = '900 9px "Press Start 2P", monospace';
+    ctx.fillText('HOY BITCOIN', 380, 190);
+    ctx.fillText('VALE MÁS QUE', 380, 205);
+    ctx.fillText('MI PENSIÓN', 380, 220);
+
+    // Título del artículo
+    ctx.fillStyle = '#1a0a00';
+    ctx.textAlign = 'center';
+    ctx.font = '900 14px "Press Start 2P", serif';
+    ctx.fillText('CUANDO MELTDOWN', 256, 430);
+    ctx.fillText('ABRIÓ SUS PUERTAS', 256, 452);
+
+    // Cuerpo del artículo (líneas decorativas de texto)
+    ctx.fillStyle = '#3a2a10';
+    ctx.font = '8px "JetBrains Mono", monospace';
+    const loremLines = [
+      'Un bar donde el whisky se paga',
+      'en satoshis y los cocteles tienen',
+      'nombre de altcoins. Jhojan lo soñó',
+      'y lo hizo realidad en el corazón',
+      'de Cali, Colombia. Referente Web3.',
+    ];
+    loremLines.forEach((l, i) => ctx.fillText(l, 256, 490 + i * 18));
+
+    // Firma estilo Garzón
+    ctx.fillStyle = '#8b6c3a';
+    ctx.font = '9px "JetBrains Mono", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('VAULT EDITORES · MELTDOWN 2024', 486, 680);
+  }
+
+  draw();
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  if (document.fonts) {
+    document.fonts.ready.then(() => { draw(); texture.needsUpdate = true; });
+  }
+  return texture;
+}
+
+// ─── Póster Ambiental: Bitcoin Pizza Day (memorabilia) ───────────────────────
+function createBitcoinPizzaPosterTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 704;
+  const ctx = canvas.getContext('2d');
+
+  function draw() {
+    // Fondo negro foto retro con textura de grano
+    ctx.fillStyle = '#0a0806';
+    ctx.fillRect(0, 0, 512, 704);
+
+    // Marco de foto polaroid
+    ctx.fillStyle = '#e8e0d0';
+    ctx.fillRect(14, 14, 484, 560);
+    ctx.fillStyle = '#f0e8d8';
+    ctx.fillRect(20, 20, 472, 540);
+
+    // "Foto" en escala de grises — pizza y BTC estilizados
+    ctx.fillStyle = '#c8b89a';
+    ctx.fillRect(22, 22, 468, 480);
+
+    // Granos de película retro
+    for (let i = 0; i < 300; i++) {
+      const gx = 22 + Math.sin(i * 127.3) * 234 + 234;
+      const gy = 22 + Math.cos(i * 89.7) * 240 + 240;
+      ctx.fillStyle = `rgba(${Math.floor(150 + Math.sin(i) * 50)},${Math.floor(140 + Math.cos(i) * 40)},${Math.floor(120 + Math.sin(i * 2) * 30)},0.4)`;
+      ctx.fillRect(gx, gy, 2, 2);
+    }
+
+    // Pizza (caja) — pixelada retro
+    ctx.fillStyle = '#8b6020';
+    ctx.fillRect(80, 80, 310, 250);
+    ctx.fillStyle = '#b07830';
+    ctx.fillRect(88, 88, 294, 234);
+    ctx.fillStyle = '#e8a050';
+    ctx.fillRect(100, 100, 270, 210);
+    // "Topping" simplificado
+    ctx.fillStyle = '#c83020';
+    for (let r = 0; r < 6; r++) {
+      const rx = 120 + (r % 3) * 80;
+      const ry = 130 + Math.floor(r / 3) * 80;
+      ctx.beginPath(); ctx.arc(rx, ry, 24, 0, Math.PI * 2); ctx.fill();
+    }
+    // Texto en caja de pizza
+    ctx.fillStyle = '#2a1000';
+    ctx.textAlign = 'center';
+    ctx.font = '900 11px "Press Start 2P", monospace';
+    ctx.fillText("PAPA JOHN'S", 256, 330);
+    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.fillText('ORDEN N° 0001', 256, 350);
+
+    // Logo BTC simplificado
+    ctx.fillStyle = '#f7931a';
+    ctx.beginPath(); ctx.arc(380, 400, 46, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 28px "JetBrains Mono", monospace';
+    ctx.fillText('₿', 380, 405);
+
+    // Leyenda debajo de la foto (zona blanca de polaroid)
+    ctx.fillStyle = '#1a1208';
+    ctx.textAlign = 'center';
+    ctx.font = '900 10px "Press Start 2P", monospace';
+    ctx.fillText('22 MAY 2010', 256, 548);
+
+    // Zona inferior negra del póster
+    ctx.fillStyle = '#f7931a';
+    ctx.fillRect(14, 580, 484, 2);
+
+    ctx.fillStyle = '#f7931a';
+    ctx.textAlign = 'center';
+    ctx.font = '900 13px "Press Start 2P", monospace';
+    ctx.fillText('BITCOIN PIZZA DAY', 256, 616);
+
+    ctx.fillStyle = '#c8b060';
+    ctx.font = '10px "Press Start 2P", monospace';
+    ctx.fillText('10,000 BTC = 2 PIZZAS', 256, 640);
+
+    ctx.fillStyle = '#6a5838';
+    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.fillText('PRIMERA TRANSACCIÓN REAL BTC', 256, 665);
+    ctx.fillText('MELTDOWN MEMORABILIA COLLECTION', 256, 683);
+  }
+
+  draw();
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  if (document.fonts) {
+    document.fonts.ready.then(() => { draw(); texture.needsUpdate = true; });
+  }
+  return texture;
+}
+
 // ─── SecretVault ──────────────────────────────────────────────────────────────
 export class SecretVault extends THREE.Group {
   constructor() {
@@ -341,7 +694,168 @@ export class SecretVault extends THREE.Group {
     hsBezelGeo.translate(2.8, 1.80, -RD / 2 + 0.10);
     this.add(cel(hsBezelGeo, darkMat));
 
+    // ── Pantallas CRT Animadas en Loop (Pared Izquierda) ─────────────────────
+    // Simula "clips mudos de MELTDOWN" — 2 monitores CRT en pedestales
+    this._crtScreens = [];
+
+    const crtPositions = [
+      { x: -RW / 2 + 0.12, y: 1.75, z: 0.8,  rotY:  Math.PI / 2 },
+      { x: -RW / 2 + 0.12, y: 1.75, z: -2.0, rotY:  Math.PI / 2 },
+    ];
+
+    crtPositions.forEach(({ x, y, z, rotY }) => {
+      const crtGroup = new THREE.Group();
+      crtGroup.position.set(x, y, z);
+      crtGroup.rotation.y = rotY;
+
+      // Carcasa del CRT
+      const crtCaseGeo = new THREE.BoxGeometry(0.70, 0.56, 0.44);
+      crtCaseGeo.translate(0, 0, 0);
+      crtGroup.add(cel(crtCaseGeo, darkMat));
+
+      // Cuello del CRT (más ancho atrás)
+      const crtNeckGeo = new THREE.BoxGeometry(0.56, 0.46, 0.26);
+      crtNeckGeo.translate(0, 0, -0.32);
+      crtGroup.add(new THREE.Mesh(crtNeckGeo, darkMat));
+
+      // Bisel de la pantalla
+      const bezelGeo = new THREE.BoxGeometry(0.66, 0.52, 0.04);
+      crtGroup.add(cel(bezelGeo, metalMat));
+
+      // Pantalla animada
+      const crtData = createCRTLoopTexture();
+      this._crtScreens.push(crtData);
+      const screenGeo = new THREE.PlaneGeometry(0.56, 0.42);
+      const screenMesh = new THREE.Mesh(screenGeo, new THREE.MeshBasicMaterial({
+        map: crtData.texture,
+        toneMapped: false,
+      }));
+      screenMesh.position.z = 0.022;
+      crtGroup.add(screenMesh);
+
+      // Botón de encendido
+      const btnGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.025, 8);
+      const btnMesh = new THREE.Mesh(btnGeo, new THREE.MeshBasicMaterial({ color: 0x3ddc84 }));
+      btnMesh.rotation.x = Math.PI / 2;
+      btnMesh.position.set(0.28, -0.20, 0.022);
+      crtGroup.add(btnMesh);
+
+      // Pedestal / soporte del monitor
+      const standGeo = new THREE.BoxGeometry(0.10, 0.22, 0.10);
+      standGeo.translate(0, -0.39, 0);
+      crtGroup.add(cel(standGeo, metalMat));
+
+      const standBaseGeo = new THREE.BoxGeometry(0.44, 0.05, 0.34);
+      standBaseGeo.translate(0, -0.50, 0);
+      crtGroup.add(cel(standBaseGeo, metalMat));
+
+      // Luz de pantalla
+      const screenLight = new THREE.PointLight(0x28e8d8, 0.8, 2.0, 1.8);
+      screenLight.position.set(0, 0, 0.50);
+      crtGroup.add(screenLight);
+
+      this.add(crtGroup);
+    });
+
+    // Letrero sobre los monitores CRT
+    const crtLabelGeo = new THREE.PlaneGeometry(1.50, 0.22);
+    const crtLabelCtx = document.createElement('canvas');
+    crtLabelCtx.width = 512; crtLabelCtx.height = 80;
+    const crtLCtx = crtLabelCtx.getContext('2d');
+    crtLCtx.fillStyle = '#06040e';
+    crtLCtx.fillRect(0, 0, 512, 80);
+    crtLCtx.strokeStyle = '#28e8d8';
+    crtLCtx.lineWidth = 6;
+    crtLCtx.strokeRect(4, 4, 504, 72);
+    crtLCtx.fillStyle = '#28e8d8';
+    crtLCtx.textAlign = 'center';
+    crtLCtx.textBaseline = 'middle';
+    crtLCtx.font = '900 12px "Press Start 2P", monospace';
+    crtLCtx.fillText('📺 MELTDOWN EN VIVO', 256, 40);
+    const crtLabelTex = new THREE.CanvasTexture(crtLabelCtx);
+    crtLabelTex.minFilter = THREE.LinearFilter;
+    const crtLabelMesh = new THREE.Mesh(crtLabelGeo, new THREE.MeshBasicMaterial({ map: crtLabelTex, toneMapped: false }));
+    crtLabelMesh.position.set(-RW / 2 + 0.12, 2.60, -0.60);
+    crtLabelMesh.rotation.y = Math.PI / 2;
+    this.add(crtLabelMesh);
+    if (document.fonts) {
+      document.fonts.ready.then(() => {
+        crtLCtx.clearRect(0, 0, 512, 80);
+        crtLCtx.fillStyle = '#06040e'; crtLCtx.fillRect(0, 0, 512, 80);
+        crtLCtx.strokeStyle = '#28e8d8'; crtLCtx.lineWidth = 6; crtLCtx.strokeRect(4, 4, 504, 72);
+        crtLCtx.fillStyle = '#28e8d8'; crtLCtx.textAlign = 'center'; crtLCtx.textBaseline = 'middle';
+        crtLCtx.font = '900 12px "Press Start 2P", monospace';
+        crtLCtx.fillText('📺 MELTDOWN EN VIVO', 256, 40);
+        crtLabelTex.needsUpdate = true;
+      });
+    }
+
+    // ── Pósters Ambientales (Pared Derecha) ───────────────────────────────────
+    // Póster 1: Estilo Jaime Garzón — Meltdown editorial humorístico
+    const garzonTex = createGarzonPosterTexture();
+    const garzonGeo = new THREE.PlaneGeometry(1.18, 1.62);
+    const garzonMesh = new THREE.Mesh(garzonGeo, new THREE.MeshBasicMaterial({ map: garzonTex, toneMapped: false }));
+    garzonMesh.position.set(RW / 2 - 0.05, 1.85, 0.80);
+    garzonMesh.rotation.y = -Math.PI / 2;
+    this.add(garzonMesh);
+
+    // Marco del póster Garzón
+    const garzonFrameGeo = new THREE.BoxGeometry(0.05, 1.70, 1.26);
+    garzonFrameGeo.translate(RW / 2 - 0.07, 1.85, 0.80);
+    this.add(cel(garzonFrameGeo, metalMat));
+
+    // Luz cálida sobre el póster Garzón (simula foco de galería)
+    const garzonLight = new THREE.PointLight(0xd4a060, 1.2, 2.0, 1.8);
+    garzonLight.position.set(RW / 2 - 0.8, 2.9, 0.80);
+    this.add(garzonLight);
+
+    // Póster 2: Bitcoin Pizza Day — foto polaroid memorabilia
+    const pizzaTex = createBitcoinPizzaPosterTexture();
+    const pizzaGeo = new THREE.PlaneGeometry(1.18, 1.62);
+    const pizzaMesh = new THREE.Mesh(pizzaGeo, new THREE.MeshBasicMaterial({ map: pizzaTex, toneMapped: false }));
+    pizzaMesh.position.set(RW / 2 - 0.05, 1.85, -2.0);
+    pizzaMesh.rotation.y = -Math.PI / 2;
+    this.add(pizzaMesh);
+
+    // Marco del póster Bitcoin Pizza Day
+    const pizzaFrameGeo = new THREE.BoxGeometry(0.05, 1.70, 1.26);
+    pizzaFrameGeo.translate(RW / 2 - 0.07, 1.85, -2.0);
+    this.add(cel(pizzaFrameGeo, metalMat));
+
+    // Luz ámbar sobre el póster de Bitcoin Pizza (foco de galería)
+    const pizzaLight = new THREE.PointLight(0xf7931a, 1.0, 2.0, 1.8);
+    pizzaLight.position.set(RW / 2 - 0.8, 2.9, -2.0);
+    this.add(pizzaLight);
+
+    // Letrero de categoría para los pósters
+    const posterLabelGeo = new THREE.PlaneGeometry(1.50, 0.22);
+    const posterLCtx = document.createElement('canvas');
+    posterLCtx.width = 512; posterLCtx.height = 80;
+    const pCtx = posterLCtx.getContext('2d');
+    pCtx.fillStyle = '#06040e'; pCtx.fillRect(0, 0, 512, 80);
+    pCtx.strokeStyle = '#f7931a'; pCtx.lineWidth = 6; pCtx.strokeRect(4, 4, 504, 72);
+    pCtx.fillStyle = '#f7931a'; pCtx.textAlign = 'center'; pCtx.textBaseline = 'middle';
+    pCtx.font = '900 11px "Press Start 2P", monospace';
+    pCtx.fillText('🖼 GALERÍA MEMORABILIA', 256, 40);
+    const posterLabelTex = new THREE.CanvasTexture(posterLCtx);
+    posterLabelTex.minFilter = THREE.LinearFilter;
+    const posterLabelMesh = new THREE.Mesh(posterLabelGeo, new THREE.MeshBasicMaterial({ map: posterLabelTex, toneMapped: false }));
+    posterLabelMesh.position.set(RW / 2 - 0.05, 2.90, -0.60);
+    posterLabelMesh.rotation.y = -Math.PI / 2;
+    this.add(posterLabelMesh);
+    if (document.fonts) {
+      document.fonts.ready.then(() => {
+        pCtx.fillStyle = '#06040e'; pCtx.fillRect(0, 0, 512, 80);
+        pCtx.strokeStyle = '#f7931a'; pCtx.lineWidth = 6; pCtx.strokeRect(4, 4, 504, 72);
+        pCtx.fillStyle = '#f7931a'; pCtx.textAlign = 'center'; pCtx.textBaseline = 'middle';
+        pCtx.font = '900 11px "Press Start 2P", monospace';
+        pCtx.fillText('🖼 GALERÍA MEMORABILIA', 256, 40);
+        posterLabelTex.needsUpdate = true;
+      });
+    }
+
     // ── Puerta de Salida "EXIT" ───────────────────────────────────────────────
+
     // Ubicada en la pared frontal (Z positivo) que separa el vault de la sala principal
     const exitFrameMat = new THREE.MeshStandardMaterial({ color: 0x0a1a14, roughness: 0.65, flatShading: true });
 
@@ -496,6 +1010,11 @@ export class SecretVault extends THREE.Group {
   update(dt, time, prefersReducedMotion = false) {
     this._time += dt;
     this.vendingMachine.update(time, dt);
+
+    // Actualizar pantallas CRT animadas en loop
+    if (!prefersReducedMotion && this._crtScreens) {
+      this._crtScreens.forEach(crt => crt.update(time));
+    }
 
     // ── Animación de activación de la puerta EXIT ────────────────────
     if (this._exitActivating) {
