@@ -194,14 +194,16 @@ export class Cabinet extends THREE.Group {
       toneMapped: false,
     });
 
-    const createCelMesh = (geometry, material, outlineScale = 1.035, edgeThreshold = 18) => {
+    const createCelMesh = (geometry, material, outlineScale = 0, edgeThreshold = 18) => {
       const group = new THREE.Group();
       const mainMesh = new THREE.Mesh(geometry, material);
       group.add(mainMesh);
 
-      const outlineMesh = new THREE.Mesh(geometry, outlineBacksideMat);
-      outlineMesh.scale.set(outlineScale, outlineScale, outlineScale);
-      group.add(outlineMesh);
+      if (outlineScale && outlineScale > 1.0) {
+        const outlineMesh = new THREE.Mesh(geometry, outlineBacksideMat);
+        outlineMesh.scale.set(outlineScale, outlineScale, outlineScale);
+        group.add(outlineMesh);
+      }
 
       const edges = new THREE.EdgesGeometry(geometry, edgeThreshold);
       const lines = new THREE.LineSegments(edges, edgeLineMat);
@@ -215,14 +217,14 @@ export class Cabinet extends THREE.Group {
     // =========================================================================
     const backWallGeo = new THREE.BoxGeometry(1.14, 3.28, 0.08);
     backWallGeo.translate(0, 1.64, -0.62);
-    this.add(createCelMesh(backWallGeo, bodyMat, 1.03));
+    this.add(createCelMesh(backWallGeo, bodyMat, 0));
 
     // =========================================================================
     // 2. CUERPO INFERIOR / BASE
     // =========================================================================
     const baseGeo = new THREE.BoxGeometry(1.14, 1.32, 1.25);
     baseGeo.translate(0, 0.66, -0.02);
-    this.add(createCelMesh(baseGeo, bodyMat, 1.03));
+    this.add(createCelMesh(baseGeo, bodyMat, 0));
 
     const coinDoorGeo = new THREE.BoxGeometry(0.62, 0.72, 0.05);
     const coinDoor = createCelMesh(coinDoorGeo, darkMat, 1.04);
@@ -390,7 +392,7 @@ export class Cabinet extends THREE.Group {
     // Techo
     const roofGeo = new THREE.BoxGeometry(1.14, 0.14, 1.35);
     roofGeo.translate(0, 3.26, 0.02);
-    this.add(createCelMesh(roofGeo, bodyMat, 1.035));
+    this.add(createCelMesh(roofGeo, bodyMat, 0));
 
     // =========================================================================
     // 6. ALAS LATERALES Y FRANJAS DE ACENTO
@@ -417,9 +419,21 @@ export class Cabinet extends THREE.Group {
       for (let i = 0; i < pos.count; i++) {
         pos.setXYZ(i, pos.getZ(i), pos.getY(i), pos.getX(i));
       }
+
+      // Invertir índices para restaurar orientación CCW tras el intercambio de coordenadas X y Z
+      if (wingExtrude.index) {
+        const arr = wingExtrude.index.array;
+        for (let i = 0; i < arr.length; i += 3) {
+          const tmp = arr[i];
+          arr[i] = arr[i + 2];
+          arr[i + 2] = tmp;
+        }
+        wingExtrude.index.needsUpdate = true;
+      }
       wingExtrude.computeVertexNormals();
 
-      const wingMesh = createCelMesh(wingExtrude, bodyMat, 1.03, 12);
+      // En las alas laterales EdgesGeometry aporta el trazo cel-shaded nítido sin oclusión negra
+      const wingMesh = createCelMesh(wingExtrude, bodyMat, 0, 12);
       group.add(wingMesh);
 
       // Borde de Neón T-Molding en el canto frontal
