@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { cabinetsConfig } from './content.js';
 import { Cabinet } from './cabinets.js';
 import { openPanel, closePanel, setFocus, isUIOpen } from './ui.js';
-import { SecretPortal } from './vault/SecretPortal.js';
+import { SecretPortal, PORTAL_STATES } from './vault/SecretPortal.js';
 import { SecretVault } from './vault/SecretVault.js';
 import { VaultDownloadsZone } from './vault/VaultDownloadsZone.js';
 import { onMuteChange, toggleMute } from './downloads/audio.js';
@@ -101,11 +101,17 @@ cabinetsConfig.forEach((config, i) => {
   cabinets.push(cabinet);
 });
 
-// Portal Secreto (acceso al Vault)
+// Portal Secreto (evento dinámico aleatorio e intermitente)
 const secretPortal = new SecretPortal();
-secretPortal.position.set(-6.8, 0, -2.0);
-secretPortal.rotation.y = Math.PI * 0.08; // Girado levemente hacia la sala
 mainRoomGroup.add(secretPortal);
+
+const portalDesktopSpots = [
+  { pos: new THREE.Vector3(-6.8, 0, -2.0), rot: Math.PI * 0.08 },
+  { pos: new THREE.Vector3(6.8, 0, -2.0), rot: -Math.PI * 0.08 },
+  { pos: new THREE.Vector3(-3.8, 0, -3.2), rot: Math.PI * 0.04 },
+];
+let _desktopPortalTimer = 7.0; // Aparece por primera vez a los 7s
+let _lastSpotIndex = -1;
 
 // Suelo de la sala principal
 const floorGeo = new THREE.PlaneGeometry(60, 60);
@@ -239,6 +245,7 @@ function enterVault() {
   if (activeRoom === 'vault' || _portalActivating) return;
   _portalActivating = true;
   canvas.style.cursor = 'wait';
+  clearMobileSecretEvent();
 
   // 1. El portal dispara su animación de 3 pulsos (~700ms)
   secretPortal.activate(() => {
@@ -419,13 +426,61 @@ function updateMobileAffordance(index) {
   mobileTapHint.classList.add('bounce-trigger');
 }
 
+let _mobileSecretActive = false;
+let _mobileSecretTimer = null;
+
+function clearMobileSecretEvent() {
+  if (!_mobileSecretActive) return;
+  _mobileSecretActive = false;
+  if (_mobileSecretTimer) {
+    clearTimeout(_mobileSecretTimer);
+    _mobileSecretTimer = null;
+  }
+  if (secretPortal.state !== PORTAL_STATES.HIDDEN && secretPortal.state !== PORTAL_STATES.ACTIVATING) {
+    secretPortal.despawn();
+  }
+  updateMobileAffordance(currentMobileIndex);
+}
+
 export function goToMobileCabinet(targetIndex) {
   if (isUIOpen() || isTransitioning) return;
+
+  if (_mobileSecretActive) {
+    clearMobileSecretEvent();
+  }
+
   currentMobileIndex = ((targetIndex % cabinets.length) + cabinets.length) % cabinets.length;
-  updateMobileAffordance(currentMobileIndex);
+  const cabX = cabinets[currentMobileIndex].position.x;
+
+  // Probabilidad de aparición del portal en mobile (~9%)
+  const triggerSecretChance = Math.random() < 0.09;
+
+  if (triggerSecretChance) {
+    _mobileSecretActive = true;
+    secretPortal.position.set(cabX, 0, 0.2);
+    secretPortal.rotation.y = 0;
+    secretPortal.forceActiveForMobile(2.5);
+
+    if (mobileTapHint) {
+      mobileTapHint.textContent = '★ ENTRAR AL VAULT ★';
+      mobileTapHint.style.setProperty('--hint-color', '#c084fc');
+      mobileTapHint.style.setProperty('--hint-glow', 'rgba(192,132,252,0.85)');
+      mobileTapHint.classList.remove('bounce-trigger');
+      void mobileTapHint.offsetWidth;
+      mobileTapHint.classList.add('bounce-trigger');
+    }
+
+    _mobileSecretTimer = setTimeout(() => {
+      if (_mobileSecretActive && activeRoom === 'main') {
+        clearMobileSecretEvent();
+      }
+    }, 2500);
+  } else {
+    updateMobileAffordance(currentMobileIndex);
+  }
+
   sourcePos.copy(camera.position);
   sourceTarget.copy(controls.target);
-  const cabX = cabinets[currentMobileIndex].position.x;
   targetPos.set(cabX, 2.05, 4.4);
   targetTarget.set(cabX, 1.75, 0);
   transitionDuration = 650;
@@ -449,6 +504,11 @@ if (mobileTapHint) {
   mobileTapHint.addEventListener('click', (e) => {
     e.stopPropagation();
     if (activeRoom === 'vault') return;
+    if (_mobileSecretActive && secretPortal.isInteractable()) {
+      clearMobileSecretEvent();
+      enterVault();
+      return;
+    }
     focusCabinet(currentMobileIndex);
   });
   updateMobileAffordance(0);
@@ -510,7 +570,7 @@ canvas.addEventListener('pointerup', (e) => {
     // --- Interacciones en la sala principal ---
     // 1. Portal Secreto
     const portalHit = raycaster.intersectObject(secretPortal.hitbox);
-    if (portalHit.length > 0) {
+    if (portalHit.length > 0 && secretPortal.isInteractable()) {
       enterVault();
       return;
     }
@@ -594,7 +654,22 @@ function animate() {
 
   if (activeRoom === 'main') {
     cabinets.forEach(cab => cab.update(dt, prefersReducedMotion));
-    secretPortal.update(dt, prefersReducedMotion);
+    secretPortal.update(dt, camera, prefersReducedMotion);
+
+    // En desktop: ciclo aleatorio e intermitente de aparición del portal
+    if (!isMobile) {
+      if (secretPortal.state === PORTAL_STATES.HIDDEN) {
+        _desktopPortalTimer -= dt;
+        if (_desktopPortalTimer <= 0) {
+          let nextSpot = Math.floor(Math.random() * portalDesktopSpots.length);
+          if (nextSpot === _lastSpotIndex) nextSpot = (nextSpot + 1) % portalDesktopSpots.length;
+          _lastSpotIndex = nextSpot;
+          const spot = portalDesktopSpots[nextSpot];
+          secretPortal.spawnAt(spot.pos, spot.rot, 24.0);
+          _desktopPortalTimer = 22.0 + Math.random() * 20.0;
+        }
+      }
+    }
 
     if (!prefersReducedMotion) {
       const posAttr = particleGeo.attributes.position;
