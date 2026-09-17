@@ -82,6 +82,14 @@
     <p>Tu navegador no soporta esta experiencia, por favor actualízalo.</p>
   </div>
 
+  <!-- Transición Fade-to-Black entre salas (portal / exit) -->
+  <div id="room-transition-fade" aria-hidden="true"></div>
+
+  <!-- Botón flotante de salida del Vault (solo visible dentro del cuarto secreto) -->
+  <button id="btn-vault-exit" class="vault-exit-btn" aria-label="Salir del Vault y volver a la sala principal" hidden>
+    <span>◀ SALA PRINCIPAL</span>
+  </button>
+
   <script type="module" src="./js/scene.js"></script>
 </body>
 </html>
