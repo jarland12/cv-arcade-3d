@@ -9,7 +9,7 @@ import {
 export class CartridgeStateMachine {
   constructor(downloadsZone) {
     this.zone = downloadsZone;
-    this.vendingMachine = downloadsZone.vendingMachine;
+    this.counter = downloadsZone.counter;
     this.state = 'IDLE'; // 'IDLE', 'SELECTED', 'INSERTING', 'LOADING', 'COMPLETED', 'RESET'
     
     this.activeCartridge = null;
@@ -40,8 +40,8 @@ export class CartridgeStateMachine {
     // Reproducir SFX de Coin Insert
     playCoinInsert();
 
-    // Actualizar pantalla de la máquina
-    this.vendingMachine.screenCRT.setState({
+    // Actualizar pantalla del terminal CRT en el mostrador
+    this.counter.screenCRT.setState({
       mode: 'SELECTED',
       title: cartridge.cartridgeName,
       colorHex: cartridge.colorHex,
@@ -49,14 +49,14 @@ export class CartridgeStateMachine {
       flash: 0.5,
     });
 
-    // Guardar posición y rotación inicial
+    // Guardar posición y rotación inicial en el pedestal
     this.animStartPos.copy(cartridge.position);
     this.animStartRot.copy(cartridge.rotation);
 
-    // Posición hero flotando hacia el frente de la cámara
+    // Posición hero flotando hacia arriba y al frente sobre el mostrador
     this.animTargetPos.copy(cartridge.slotLocalPos);
-    this.animTargetPos.z += 0.45;
-    this.animTargetPos.y -= 0.10;
+    this.animTargetPos.y += 0.32;
+    this.animTargetPos.z += 0.22;
 
     this.animTargetRot.set(0, prefersReducedMotion ? 0 : Math.PI * 2, 0);
 
@@ -69,29 +69,30 @@ export class CartridgeStateMachine {
 
     switch (this.state) {
       case 'IDLE':
-        // Flotación sutil (bobbing) de los cartuchos en reposo
+        // Flotación sutil sobre los pedestales del mostrador
         if (!prefersReducedMotion) {
           this.zone.cartridges.forEach((cart, i) => {
-            const bob = Math.sin(time * 2.5 + i * 1.2) * 0.005;
-            cart.position.y = cart.slotLocalPos.y + bob;
+            const bob = Math.sin(time * 2.8 + i * 1.2) * 0.004;
+            cart.position.y = cart.slotLocalPos.y + bob + cart.hoverOffset * 0.5;
             cart.position.z = cart.slotLocalPos.z + cart.hoverOffset;
           });
         }
         break;
 
       case 'SELECTED': {
-        // Giro 360° en Y y flotación hacia el frente
+        // Elevación y giro cinemático de 360° en Y
         const t = 1 - Math.pow(1 - progress, 3); // Ease Out Cubic
         if (this.activeCartridge) {
           this.activeCartridge.position.lerpVectors(this.animStartPos, this.animTargetPos, t);
+          this.activeCartridge.rotation.x = THREE.MathUtils.lerp(this.animStartRot.x, 0, t);
           this.activeCartridge.rotation.y = this.animStartRot.y + this.animTargetRot.y * t;
         }
 
         if (progress >= 1) {
-          // Transicionar a INSERTING
+          // Transicionar a INSERTING (hacia la bahía de lectura del terminal)
           this.state = 'INSERTING';
           this.stateTimer = 0;
-          this.stateDuration = prefersReducedMotion ? 0.2 : 0.45;
+          this.stateDuration = prefersReducedMotion ? 0.2 : 0.50;
 
           playSwooshClack();
 
@@ -99,13 +100,12 @@ export class CartridgeStateMachine {
             this.animStartPos.copy(this.activeCartridge.position);
             this.animStartRot.copy(this.activeCartridge.rotation);
 
-            // Destino: ranura de inserción
-            this.animTargetPos.copy(this.vendingMachine.insertionSlotPos);
-            this.animTargetPos.y += 0.08;
-            this.animTargetRot.set(-0.25, 0, 0);
+            // Destino: bahía de lectura sobre la encimera
+            this.animTargetPos.copy(this.counter.insertionSlotPos);
+            this.animTargetRot.set(-Math.PI / 2, 0, 0); // Acostado para inserción en la ranura
           }
 
-          this.vendingMachine.screenCRT.setState({
+          this.counter.screenCRT.setState({
             mode: 'INSERTING',
             title: this.activeCartridge ? this.activeCartridge.cartridgeName : 'CARGANDO',
             colorHex: this.activeCartridge ? this.activeCartridge.colorHex : '#7c4fd6',
@@ -119,12 +119,13 @@ export class CartridgeStateMachine {
         if (this.activeCartridge) {
           this.activeCartridge.position.lerpVectors(this.animStartPos, this.animTargetPos, t);
           this.activeCartridge.rotation.x = THREE.MathUtils.lerp(this.animStartRot.x, this.animTargetRot.x, t);
+          this.activeCartridge.rotation.y = THREE.MathUtils.lerp(this.animStartRot.y, this.animTargetRot.y, t);
 
-          // Al final de la inserción, deslizar dentro de la ranura
-          if (progress > 0.6) {
-            const depthT = (progress - 0.6) / 0.4;
-            this.activeCartridge.position.z = THREE.MathUtils.lerp(this.animTargetPos.z, this.animTargetPos.z - 0.22, depthT);
-            this.activeCartridge.scale.setScalar(Math.max(0.01, 1 - depthT * 0.7));
+          // Deslizar dentro de la ranura de lectura
+          if (progress > 0.5) {
+            const depthT = (progress - 0.5) / 0.5;
+            this.activeCartridge.position.y = THREE.MathUtils.lerp(this.animTargetPos.y, this.animTargetPos.y - 0.14, depthT);
+            this.activeCartridge.scale.setScalar(Math.max(0.01, 1 - depthT * 0.75));
           }
         }
 
@@ -143,7 +144,7 @@ export class CartridgeStateMachine {
       }
 
       case 'LOADING': {
-        const totalBlocks = 12;
+        const totalBlocks = 10;
         const currentBlock = Math.floor(progress * totalBlocks);
 
         if (currentBlock > this.lastBlockIndex && currentBlock < totalBlocks) {
@@ -151,7 +152,7 @@ export class CartridgeStateMachine {
           playLoadingBeep(currentBlock);
         }
 
-        this.vendingMachine.screenCRT.setState({
+        this.counter.screenCRT.setState({
           mode: 'LOADING',
           title: this.activeCartridge ? this.activeCartridge.cartridgeName : 'DOCUMENTO',
           progress: progress,
@@ -166,7 +167,7 @@ export class CartridgeStateMachine {
 
           playVictoryJingle();
 
-          this.vendingMachine.screenCRT.setState({
+          this.counter.screenCRT.setState({
             mode: 'COMPLETED',
             title: this.activeCartridge ? this.activeCartridge.cartridgeName : 'DOCUMENTO',
             colorHex: this.activeCartridge ? this.activeCartridge.colorHex : '#7c4fd6',
@@ -184,14 +185,14 @@ export class CartridgeStateMachine {
           // Transicionar a RESET
           this.state = 'RESET';
           this.stateTimer = 0;
-          this.stateDuration = 0.5;
+          this.stateDuration = 0.55;
 
           if (this.activeCartridge) {
             this.activeCartridge.visible = true;
             this.activeCartridge.scale.set(1, 1, 1);
             this.activeCartridge.rotation.copy(this.activeCartridge.slotLocalRot);
             this.activeCartridge.position.copy(this.activeCartridge.slotLocalPos);
-            this.activeCartridge.position.z += 0.2; // Sale suavemente del fondo del slot
+            this.activeCartridge.position.y += 0.25; // Reaparece flotando sobre el pedestal
           }
         }
         break;
@@ -200,9 +201,9 @@ export class CartridgeStateMachine {
       case 'RESET': {
         const t = 1 - Math.pow(1 - progress, 2);
         if (this.activeCartridge) {
-          this.activeCartridge.position.z = THREE.MathUtils.lerp(
-            this.activeCartridge.slotLocalPos.z + 0.2,
-            this.activeCartridge.slotLocalPos.z,
+          this.activeCartridge.position.y = THREE.MathUtils.lerp(
+            this.activeCartridge.slotLocalPos.y + 0.25,
+            this.activeCartridge.slotLocalPos.y,
             t
           );
         }
@@ -213,9 +214,9 @@ export class CartridgeStateMachine {
             this.activeCartridge = null;
           }
 
-          this.vendingMachine.screenCRT.setState({
+          this.counter.screenCRT.setState({
             mode: 'IDLE',
-            title: 'SELECCIONA CARTUCHO',
+            title: 'ELIGE UN PREMIO',
             colorHex: '#7c4fd6',
             flash: 0,
             progress: 0,

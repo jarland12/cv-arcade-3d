@@ -503,7 +503,7 @@ canvas.addEventListener('pointerup', (e) => {
   // Interacción con Zona de Descargas / Cartuchos
   const dlHit = downloadsZone.handleClick(raycaster, prefersReducedMotion);
   if (dlHit) {
-    if (dlHit.type === 'machine' && !isTransitioning) {
+    if ((dlHit.type === 'counter' || dlHit.type === 'machine') && !isTransitioning) {
       focusDownloadsZone(dlHit.position);
     }
     return;
