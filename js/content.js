@@ -6,13 +6,35 @@ export const cabinetsConfig = [
     colorHex: "#4DE8E8",
     bodyColor: 0x182c33, // Muted dark cyan body
     marqueeText: "CHARACTER SELECT",
-    eyebrow: "LOAD PLAYER",
-    body: "Ingeniero de sistemas basado en Cali, Colombia. Conocido como \"Cacheticos\" en algunas comunidades.",
-    bullets: [
-      "Fundador y operador de Meltdown, centro de PC gaming y arcade — el único de su tipo en su municipio.",
-      "Fundador de una tienda de comida natural para mascotas, también única en su municipio.",
-      "Angel ambassador de Binance en Colombia.",
-      "Docente de tecnología desde febrero de 2023."
+    eyebrow: "PLAYER PROFILE · INGENIERO EN SISTEMAS",
+    badges: ["Univ. del Valle", "Ingeniero de Sistemas", "Tecnólogo de Información", "Fullstack", "Web 3.0"],
+    body: "Ingeniero en Sistemas y Tecnólogo en Sistemas de Información graduado de la Universidad del Valle. Apasionado por el desarrollo de software, la electrónica, la docencia y los fundamentos de la Web 3.0. Cuento con una sólida trayectoria en creación de recursos educativos, liderazgo de equipos y adaptabilidad en entornos corporativos y tecnológicos.",
+    sections: [
+      {
+        title: "ESTUDIOS ACADÉMICOS",
+        bullets: [
+          "Universidad del Valle (2017–2020) — Ingeniero en Sistemas · Participación en el 14° Congreso Colombiano de Computación (14CCC).",
+          "Universidad del Valle (2012–2017) — Tecnólogo en Sistemas de Información · Participación en el 10° Congreso Colombiano de Computación (10CCC).",
+          "Universidad del Valle (2022–2023) — Diplomado en Energía Solar Fotovoltaica.",
+          "Colegio San Francisco Javier (2001–2012) — Bachiller Técnico con especialidad en Comercio."
+        ]
+      },
+      {
+        title: "HABILIDADES TÉCNICAS & HERRAMIENTAS",
+        bullets: [
+          "Desarrollo Web: PHP, Python, Django, Yii, Bootstrap, Materialize.",
+          "Bases de Datos: SQL y fundamentos en arquitecturas NoSQL.",
+          "Robótica & Hardware: Arduino, C++, ESP32, Algoritmos y lógica computacional.",
+          "Suite Creativa Adobe: Manejo intermedio de Photoshop, Illustrator, Premiere y After Effects.",
+          "Formación Complementaria: Learn English International (Metodología Integral Conversational, 2004–2011) y Marketing Digital (Universidad del Valle, 2021)."
+        ]
+      }
+    ],
+    contact: [
+      { label: "Email", value: "jhojan.ramos@correounivalle.edu.co", href: "mailto:jhojan.ramos@correounivalle.edu.co", icon: "✉" },
+      { label: "Teléfono / WhatsApp", value: "+57 311 7347740", href: "https://wa.me/573117347740", icon: "☎" },
+      { label: "Usuario / GitHub", value: "Johanr_londono", href: "https://github.com/johanr_londono", icon: "⌨" },
+      { label: "Ubicación", value: "Cali, Colombia", icon: "📍" }
     ]
   },
   {
@@ -22,13 +44,20 @@ export const cabinetsConfig = [
     colorHex: "#F2A93B",
     bodyColor: 0x332313, // Muted dark amber body
     marqueeText: "TRAINING MODE",
-    eyebrow: "XP GANADO",
-    body: "Desde el 10 de febrero de 2023, enseñando en la Institución La Gran Colombia: tecnologías de modelos de IA aplicados a seguridad, principios básicos de seguridad informática, y programación en C++ enfocada en Arduino y ESP32.",
-    bullets: [
-      "Ha formado a más de 100 estudiantes.",
-      "Diseñó él mismo todo el contenido del curso.",
-      "Fue el primero en dictar contenido de IA y seguridad informática en la institución.",
-      "Bajo su enseñanza, sus estudiantes desarrollaron un semáforo para una feria de ciencias."
+    eyebrow: "DOCENCIA & FORMACIÓN TECNOLÓGICA",
+    badges: ["Inst. La Gran Colombia", "Docente Titular", "Robótica & C++", "Modelos IA", "+100 Alumnos"],
+    body: "Docente de Informática y Robótica en la Institución La Gran Colombia (2022–Actualidad). Creador y facilitador de programas formativos de vanguardia para introducir a nuevas generaciones en el pensamiento algorítmico, automatización y seguridad.",
+    sections: [
+      {
+        title: "LOGROS DOCENTES & METODOLOGÍA",
+        bullets: [
+          "+100 estudiantes formados en programación, pensamiento lógico y desarrollo de proyectos tecnológicos.",
+          "Pionero Institucional: Diseñó e impartió el primer programa educativo de la institución sobre Modelos de IA aplicados a la seguridad informática.",
+          "Laboratorios de Robótica Práctica: Enseñanza en C++ aplicado a microcontroladores Arduino y ESP32, electrónica y circuitos.",
+          "Innovación en Ferias de Ciencias: Dirección y mentoría de proyectos estudiantiles como semáforos inteligentes y sistemas automatizados.",
+          "Creación de Recursos Pedagógicos: Desarrollo autónomo de guías didácticas, laboratorios interactivos y metodologías de evaluación práctica."
+        ]
+      }
     ]
   },
   {
@@ -38,14 +67,20 @@ export const cabinetsConfig = [
     colorHex: "#E85DE0",
     bodyColor: 0x301530, // Muted dark magenta body
     marqueeText: "MELTDOWN",
-    eyebrow: "HOME BASE",
-    body: "Meltdown nace de la idea de crear un espacio que no existía en su municipio: un lugar donde la cultura gamer se vive, no solo se juega. Un centro de PC gaming y arcade completamente temático, pensado como una experiencia inmersiva más que como un simple alquiler de equipos.",
-    bullets: [
-      "Ambientación 100% temática, diseñada para que la experiencia arcade se sienta genuina.",
-      "Combina PCs gamer de alto rendimiento con cabinas arcade físicas, modernas y clásicas.",
-      "También es un espacio abierto para quienes quieren programar y codear, no solo jugar.",
-      "En constante evolución: explorando nuevas formas de expandir la experiencia (como pistolas de luz para juegos shooter).",
-      "El único espacio de su tipo en su municipio."
+    eyebrow: "CONSULTORÍA & EMPRENDIMIENTO TECH",
+    badges: ["Toros Corredor", "Colgate", "Fundador Meltdown", "PC Gaming", "Hardware Arcade"],
+    body: "Combinación de experiencia como consultor y desarrollador de software empresarial con el liderazgo emprendedor, creando infraestructuras tecnológicas y espacios inmersivos pioneros en la región.",
+    sections: [
+      {
+        title: "TRAYECTORIA PROFESIONAL & DESARROLLO",
+        bullets: [
+          "Toros Corredor (2020–2022) — Consultor / Desarrollador: Desarrollo e implementación de aplicativo empresarial de misión crítica para Colgate.",
+          "Fundador y Operador de Meltdown: Creación del único centro de PC gaming y arcade temático de su municipio, diseñado como un ecosistema inmersivo de entretenimiento y tecnología.",
+          "Integración de Sistemas y Hardware: Ensamblaje y optimización de computadores de alto rendimiento y adaptación de gabinetes arcade con periféricos avanzados.",
+          "Comunidad Tecnológica: Espacio concebido para congregar no solo a gamers, sino a programadores y entusiastas del código para colaborar y experimentar.",
+          "Innovación Comercial: Creación y operación de modelo de negocio de alimentos naturales para mascotas, pionero en la zona."
+        ]
+      }
     ]
   },
   {
@@ -55,13 +90,20 @@ export const cabinetsConfig = [
     colorHex: "#F0B90B",
     bodyColor: 0x332e12, // Muted dark gold body
     marqueeText: "BINANCE",
-    eyebrow: "GUILD",
-    body: "Angel ambassador de Binance en Colombia desde 2023.",
-    bullets: [
-      "Impulsa iniciativas tanto digitales como presenciales dentro del programa.",
-      "Diseñó y desarrolló mecánicas de gamificación para eventos de la comunidad.",
-      "Moderación de comunidad y onboarding de nuevos miembros.",
-      "Presencia activa en eventos offline representando la marca."
+    eyebrow: "GUILD · COMUNIDAD & WEB 3.0",
+    badges: ["Binance Ambassador", "Certificación SENA", "Marketing Digital", "Gamificación", "Web3"],
+    body: "Angel Ambassador de Binance en Colombia desde 2023 y promotor del ecosistema Web 3.0, respaldado con certificación formal en Blockchain por el Servicio Nacional de Aprendizaje (SENA, 2022).",
+    sections: [
+      {
+        title: "LIDERAZGO COMUNITARIO & CRIPTOECONOMÍA",
+        bullets: [
+          "Certificación Blockchain SENA (2022) y Formación en Marketing Digital (Universidad del Valle, 2021).",
+          "Onboarding y Pedagogía: Acompañamiento, moderación y educación técnica a comunidades en finanzas descentralizadas y tecnología blockchain.",
+          "Mecánicas de Gamificación: Diseño e implementación de dinámicas lúdicas e interactivas para eventos masivos, convenciones y hackathons.",
+          "Representación de Marca: Presencia activa como vocero y facilitador en actividades presenciales y digitales del ecosistema Web 3.0 en Colombia.",
+          "Seguridad en la Red: Divulgación sobre mejores prácticas en custodia de activos, contratos inteligentes y prevención de vulnerabilidades."
+        ]
+      }
     ]
   }
 ];

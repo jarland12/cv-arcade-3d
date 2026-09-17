@@ -12,6 +12,10 @@ const root = document.documentElement;
 let isPanelOpen = false;
 let onCloseCallback = null;
 
+const panelBadges = document.getElementById('panel-badges');
+const panelSections = document.getElementById('panel-sections');
+const panelContact = document.getElementById('panel-contact');
+
 // Opens the panel with data from a specific cabinet
 export function openPanel(cabinetIndex, onClose) {
   if (isPanelOpen) return;
@@ -27,14 +31,97 @@ export function openPanel(cabinetIndex, onClose) {
   panelEyebrow.textContent = data.eyebrow;
   panelTitle.textContent = data.title;
   panelBody.textContent = data.body;
+
+  // Badges
+  if (panelBadges) {
+    panelBadges.innerHTML = '';
+    if (data.badges && data.badges.length > 0) {
+      data.badges.forEach(b => {
+        const badge = document.createElement('span');
+        badge.className = 'panel-badge';
+        badge.textContent = b;
+        panelBadges.appendChild(badge);
+      });
+      panelBadges.style.display = 'flex';
+    } else {
+      panelBadges.style.display = 'none';
+    }
+  }
+
+  // Sections (subsections with headers and bullets)
+  if (panelSections) {
+    panelSections.innerHTML = '';
+    if (data.sections && data.sections.length > 0) {
+      data.sections.forEach(sec => {
+        const secDiv = document.createElement('div');
+        secDiv.className = 'panel-section';
+        
+        const secTitle = document.createElement('h3');
+        secTitle.className = 'panel-section-title';
+        secTitle.textContent = sec.title;
+        secDiv.appendChild(secTitle);
+
+        const secList = document.createElement('ul');
+        secList.className = 'panel-section-list';
+        sec.bullets.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          secList.appendChild(li);
+        });
+        secDiv.appendChild(secList);
+        panelSections.appendChild(secDiv);
+      });
+      panelSections.style.display = 'block';
+    } else {
+      panelSections.style.display = 'none';
+    }
+  }
   
-  // Populate bullets
-  panelBullets.innerHTML = '';
-  data.bullets.forEach(bullet => {
-    const li = document.createElement('li');
-    li.textContent = bullet;
-    panelBullets.appendChild(li);
-  });
+  // Legacy bullets (fallback if sections not defined)
+  if (panelBullets) {
+    panelBullets.innerHTML = '';
+    if (data.bullets && data.bullets.length > 0) {
+      data.bullets.forEach(bullet => {
+        const li = document.createElement('li');
+        li.textContent = bullet;
+        panelBullets.appendChild(li);
+      });
+      panelBullets.style.display = 'flex';
+    } else {
+      panelBullets.style.display = 'none';
+    }
+  }
+
+  // Contact Chips
+  if (panelContact) {
+    panelContact.innerHTML = '';
+    if (data.contact && data.contact.length > 0) {
+      const header = document.createElement('div');
+      header.className = 'panel-contact-header';
+      header.textContent = 'CANALES DE CONTACTO';
+      panelContact.appendChild(header);
+
+      const grid = document.createElement('div');
+      grid.className = 'contact-chips-wrapper';
+
+      data.contact.forEach(c => {
+        const el = c.href ? document.createElement('a') : document.createElement('div');
+        el.className = 'contact-chip';
+        if (c.href) {
+          el.href = c.href;
+          el.target = '_blank';
+          el.rel = 'noopener noreferrer';
+        }
+        el.innerHTML = `<span class="chip-icon">${c.icon || '▸'}</span> <span class="chip-label">${c.label}:</span> <span class="chip-val">${c.value}</span>`;
+        grid.appendChild(el);
+      });
+
+      panelContact.appendChild(grid);
+      panelContact.style.display = 'block';
+    } else {
+      panelContact.style.display = 'none';
+    }
+  }
 
   // Show panel
   panel.classList.add('open');

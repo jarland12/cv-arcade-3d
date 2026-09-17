@@ -100,7 +100,7 @@ canvas:active {
   transition: opacity 0.3s ease, transform 0.3s ease;
   z-index: 20;
   width: 90%;
-  max-width: 600px;
+  max-width: 680px;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
@@ -121,7 +121,23 @@ canvas:active {
   border-radius: 8px;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 0, 0, 0.5);
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--panel-color, #4DE8E8) rgba(5, 3, 10, 0.6);
   /* CRT scanlines effect */
+}
+
+#panel-inner::-webkit-scrollbar {
+  width: 6px;
+}
+
+#panel-inner::-webkit-scrollbar-track {
+  background: rgba(5, 3, 10, 0.6);
+  border-radius: 3px;
+}
+
+#panel-inner::-webkit-scrollbar-thumb {
+  background: var(--panel-color, #4DE8E8);
+  border-radius: 3px;
 }
 
 #panel-inner::after {
@@ -182,12 +198,82 @@ canvas:active {
 }
 
 #panel-body {
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.65;
   color: #ddd;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
+/* Badges de Especialidad / Stats */
+.panel-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.panel-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-color, #fff);
+  color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Secciones estructuradas dentro del panel */
+.panel-section {
+  margin-top: 22px;
+}
+
+.panel-section-title {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  color: var(--panel-color, #4DE8E8);
+  margin: 0 0 12px 0;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-section-title::before {
+  content: "■";
+  font-size: 8px;
+  color: var(--panel-color, #4DE8E8);
+}
+
+.panel-section-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel-section-list li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: #d8d8d8;
+}
+
+.panel-section-list li::before {
+  content: "▶";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  font-size: 9px;
+  color: var(--panel-color, #fff);
+}
+
+/* Bullets estándar / fallback */
 #panel-bullets {
   list-style: none;
   padding: 0;
@@ -212,6 +298,63 @@ canvas:active {
   top: 2px;
   font-size: 10px;
   color: var(--panel-color, #fff);
+}
+
+/* Canales de Contacto */
+.panel-contact-grid {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.18);
+}
+
+.panel-contact-header {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: var(--panel-color, #4DE8E8);
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.contact-chips-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.contact-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: rgba(18, 14, 28, 0.85);
+  border: 1px solid var(--panel-color, rgba(255, 255, 255, 0.3));
+  border-radius: 4px;
+  color: #eee;
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.contact-chip:hover {
+  background: var(--panel-color, #4DE8E8);
+  color: #08060f;
+  box-shadow: 0 0 14px var(--panel-color, #4DE8E8);
+  transform: translateY(-2px);
+}
+
+.contact-chip .chip-icon {
+  font-size: 13px;
+}
+
+.contact-chip .chip-label {
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.contact-chip:hover .chip-label,
+.contact-chip:hover .chip-val {
+  color: #08060f;
 }
 
 #no-webgl {
