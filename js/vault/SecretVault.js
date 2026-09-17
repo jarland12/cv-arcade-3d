@@ -376,6 +376,7 @@ export class SecretVault extends THREE.Group {
       side: THREE.DoubleSide,
       depthWrite: false,
     });
+    this._exitFillMat = exitFillMat; // guardar para animación
     const exitFillMesh = new THREE.Mesh(exitFillGeo, exitFillMat);
     exitFillMesh.position.set(0, 1.33, RD / 2 - 0.13);
     exitFillMesh.rotation.y = Math.PI;
@@ -384,6 +385,7 @@ export class SecretVault extends THREE.Group {
     // Neon cian en la puerta de salida
     const exitNeonGeo = new THREE.BoxGeometry(0.018, 2.56, 0.018);
     const exitNeonMat = new THREE.MeshBasicMaterial({ color: 0x28e8d8, toneMapped: false });
+    this._exitNeonMat = exitNeonMat; // guardar para animación
     [-0.57, 0.57].forEach(xOff => {
       const n = new THREE.Mesh(exitNeonGeo, exitNeonMat);
       n.position.set(xOff, 1.28, RD / 2 - 0.06);
@@ -450,6 +452,12 @@ export class SecretVault extends THREE.Group {
     };
 
     this._time = 0;
+
+    // Estado de activación de la puerta EXIT
+    this._exitActivating = false;
+    this._exitActivationTimer = 0;
+    this._exitActivationDuration = 0.65;
+    this._exitActivationCallback = null;
   }
 
   // Devuelve posiciones de cámara en coordenadas de mundo
@@ -476,9 +484,68 @@ export class SecretVault extends THREE.Group {
     return [this.vendingMachine.hitbox, this.exitDoorHitbox];
   }
 
+  // Llama a activateExit(callback) al hacer click en la puerta EXIT.
+  // Reproduce la animación cian (~650ms) y luego llama callback para el fade.
+  activateExit(callback) {
+    if (this._exitActivating) return;
+    this._exitActivating = true;
+    this._exitActivationTimer = 0;
+    this._exitActivationCallback = callback || null;
+  }
+
   update(dt, time, prefersReducedMotion = false) {
     this._time += dt;
     this.vendingMachine.update(time, dt);
+
+    // ── Animación de activación de la puerta EXIT ────────────────────
+    if (this._exitActivating) {
+      this._exitActivationTimer += dt;
+      const p = Math.min(this._exitActivationTimer / this._exitActivationDuration, 1.0);
+
+      // 3 pulsos de luz cian explosivos
+      const flash1 = Math.exp(-Math.pow((p - 0.08) * 16, 2));
+      const flash2 = Math.exp(-Math.pow((p - 0.40) * 16, 2));
+      const flash3 = Math.exp(-Math.pow((p - 0.72) * 16, 2));
+      const flashTotal = Math.max(flash1, flash2, flash3);
+
+      // Luz EXIT explota a 28 y vuelve
+      this.exitLight.intensity = 2.2 + flashTotal * 26.0;
+
+      // Relleno de la puerta destella de oscuro a cian
+      if (this._exitFillMat) {
+        this._exitFillMat.color.setHSL(0.49, 0.92, 0.06 + flashTotal * 0.52);
+        this._exitFillMat.opacity = 0.78 + flashTotal * 0.22;
+      }
+
+      // Neon cian parpadea entre blanco puro y cian
+      if (this._exitNeonMat) {
+        const neonLum = 0.48 + flashTotal * 0.52;
+        this._exitNeonMat.color.setHSL(0.49, 1.0, neonLum);
+      }
+
+      // Luz principal sube para aclarar toda la sala en el flash
+      this.mainVaultLight.intensity = 2.2 + flashTotal * 5.0;
+
+      if (p >= 1.0) {
+        this._exitActivating = false;
+        this._exitActivationTimer = 0;
+        // Resetear materiales
+        if (this._exitFillMat) {
+          this._exitFillMat.color.set(0x0a1a14);
+          this._exitFillMat.opacity = 0.78;
+        }
+        if (this._exitNeonMat) {
+          this._exitNeonMat.color.set(0x28e8d8);
+        }
+        if (this._exitActivationCallback) {
+          this._exitActivationCallback();
+          this._exitActivationCallback = null;
+        }
+      }
+      return; // skip idle animation durante activación
+    }
+
+    // Idle: pulso suave de luces
     this.exitLight.intensity = 2.0 + Math.sin(time * 1.9) * 0.30;
     this.mainVaultLight.intensity = 2.2 + Math.sin(time * 0.9) * 0.35;
   }

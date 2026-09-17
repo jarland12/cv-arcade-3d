@@ -203,6 +203,16 @@ export class SecretPortal extends THREE.Group {
     this.add(this.hitbox);
 
     this._time = 0;
+
+    // Estado de activación (animación al hacer click)
+    this._activating = false;
+    this._activationTimer = 0;
+    this._activationDuration = 0.70; // segundos antes del fade
+    this._activationCallback = null;
+
+    // Guarda referencia al plano relleno del portal para el flash
+    this._portalFill = portalFill;
+    this._fillMat = portalFillMat;
   }
 
   _buildParticles() {
@@ -249,25 +259,86 @@ export class SecretPortal extends THREE.Group {
     this.add(this.particles);
   }
 
+  // Llama a activate(callback) al hacer click en el portal.
+  // Reproduce la animación (~700ms) y luego llama callback para iniciar el fade.
+  activate(callback) {
+    if (this._activating) return;
+    this._activating = true;
+    this._activationTimer = 0;
+    this._activationCallback = callback || null;
+  }
+
   update(dt, prefersReducedMotion = false) {
     this._time += dt;
     const t = this._time;
 
-    // Pulso de intensidad de la luz del portal
+    // ── Animación de ACTIVACIÓN ─────────────────────────────────────────────
+    if (this._activating) {
+      this._activationTimer += dt;
+      const p = Math.min(this._activationTimer / this._activationDuration, 1.0);
+
+      // Tres pulsos de luz explosivos: 0.0, 0.3, 0.6 s
+      const flash1 = Math.exp(-Math.pow((p - 0.05) * 18, 2));
+      const flash2 = Math.exp(-Math.pow((p - 0.40) * 18, 2));
+      const flash3 = Math.exp(-Math.pow((p - 0.75) * 18, 2));
+      const flashTotal = Math.max(flash1, flash2, flash3);
+
+      // Luz principal sube a 28 en los picos y baja a 3 entre ellos
+      this.portalLight.intensity = 3.0 + flashTotal * 25.0;
+      this.floorLight.intensity  = 1.0 + flashTotal * 8.0;
+
+      // El relleno del portal destella de oscuro a violeta brillante
+      if (this._fillMat) {
+        this._fillMat.color.setHSL(0.78, 0.90, 0.08 + flashTotal * 0.55);
+        this._fillMat.opacity = 0.82 + flashTotal * 0.18;
+      }
+
+      // Partículas se disparan hacia afuera con velocidad 10× durante activación
+      if (!prefersReducedMotion) {
+        const posArr = this.particles.geometry.attributes.position.array;
+        const speed = 1.0 + flashTotal * 10.0;
+        for (let i = 0; i < this._particleCount; i++) {
+          posArr[i * 3 + 1] += Math.sin(t * 4.0 + this._particleOffsets[i]) * dt * speed;
+          if (posArr[i * 3 + 1] > 3.20) posArr[i * 3 + 1] = -0.10;
+          if (posArr[i * 3 + 1] < -0.15) posArr[i * 3 + 1] = 3.10;
+        }
+        this.particles.geometry.attributes.position.needsUpdate = true;
+        this.particles.material.opacity = 0.65 + flashTotal * 0.35;
+        this.particles.material.size = 0.038 + flashTotal * 0.06;
+      }
+
+      // Al completarse la animación, disparar el callback
+      if (p >= 1.0) {
+        this._activating = false;
+        this._activationTimer = 0;
+        // Resetear el material del fill
+        if (this._fillMat) {
+          this._fillMat.color.set(0x1a0a2e);
+          this._fillMat.opacity = 0.82;
+        }
+        if (this._activationCallback) {
+          this._activationCallback();
+          this._activationCallback = null;
+        }
+      }
+      return; // skip idle animation durante activación
+    }
+
+    // ── Idle: pulso suave ───────────────────────────────────────────────────
     this.portalLight.intensity = 3.0 + Math.sin(t * 2.1) * 0.65;
-    this.floorLight.intensity = 1.0 + Math.sin(t * 1.7 + 1.0) * 0.25;
+    this.floorLight.intensity  = 1.0 + Math.sin(t * 1.7 + 1.0) * 0.25;
 
     if (prefersReducedMotion) return;
 
-    // Animación de partículas flotantes
+    // Partículas flotantes normales
     const posArr = this.particles.geometry.attributes.position.array;
     for (let i = 0; i < this._particleCount; i++) {
       posArr[i * 3 + 1] += Math.sin(t * 1.4 + this._particleOffsets[i]) * dt * 0.12;
-      // Hacer que reboten suavemente
       if (posArr[i * 3 + 1] > 2.80) posArr[i * 3 + 1] = 0.05;
-      if (posArr[i * 3 + 1] < 0.0) posArr[i * 3 + 1] = 2.70;
+      if (posArr[i * 3 + 1] < 0.0)  posArr[i * 3 + 1] = 2.70;
     }
     this.particles.geometry.attributes.position.needsUpdate = true;
     this.particles.material.opacity = 0.55 + Math.sin(t * 1.8) * 0.20;
+    this.particles.material.size = 0.038;
   }
 }

@@ -232,41 +232,59 @@ function roomFadeTransition(onMidpoint) {
 }
 
 // ─── TELEPORTACIÓN AL VAULT ───────────────────────────────────────────────────
+let _portalActivating = false; // bloquea doble-click durante animación
+let _exitActivatingFlag = false;
+
 function enterVault() {
-  if (activeRoom === 'vault') return;
-  roomFadeTransition(() => {
-    // Swap de visibilidad
-    mainRoomGroup.visible = false;
-    vaultGroup.visible = true;
-    activeRoom = 'vault';
+  if (activeRoom === 'vault' || _portalActivating) return;
+  _portalActivating = true;
+  canvas.style.cursor = 'wait';
 
-    // Reposicionar cámara dentro del vault
-    const target = secretVault.getEntryCameraTarget();
-    camera.position.copy(target.pos);
-    controls.target.copy(target.look);
-    controls.update();
+  // 1. El portal dispara su animación de 3 pulsos (~700ms)
+  secretPortal.activate(() => {
+    // 2. Al terminar la animación 3D, iniciar el fade-to-black
+    roomFadeTransition(() => {
+      mainRoomGroup.visible = false;
+      vaultGroup.visible = true;
+      activeRoom = 'vault';
+      _portalActivating = false;
+      canvas.style.cursor = 'grab';
 
-    // Mostrar botón de salida
-    if (btnVaultExit) btnVaultExit.hidden = false;
+      // Reposicionar cámara dentro del vault
+      const target = secretVault.getEntryCameraTarget();
+      camera.position.copy(target.pos);
+      controls.target.copy(target.look);
+      controls.update();
 
-    updateMobileAffordance(currentMobileIndex);
+      // Mostrar botón de salida
+      if (btnVaultExit) btnVaultExit.hidden = false;
+
+      updateMobileAffordance(currentMobileIndex);
+    });
   });
 }
 
 function exitVault() {
-  if (activeRoom === 'main') return;
-  roomFadeTransition(() => {
-    mainRoomGroup.visible = true;
-    vaultGroup.visible = false;
-    activeRoom = 'main';
+  if (activeRoom === 'main' || _exitActivatingFlag) return;
+  _exitActivatingFlag = true;
+  canvas.style.cursor = 'wait';
 
-    // Volver a la posición inicial de la sala principal
-    camera.position.copy(initialCameraPos);
-    controls.target.copy(initialControlsTarget);
-    controls.update();
+  // 1. La puerta EXIT dispara su animación de 3 pulsos cian (~650ms)
+  secretVault.activateExit(() => {
+    // 2. Al terminar la animación 3D, iniciar el fade-to-black
+    roomFadeTransition(() => {
+      mainRoomGroup.visible = true;
+      vaultGroup.visible = false;
+      activeRoom = 'main';
+      _exitActivatingFlag = false;
+      canvas.style.cursor = 'grab';
 
-    // Ocultar botón de salida
-    if (btnVaultExit) btnVaultExit.hidden = true;
+      camera.position.copy(initialCameraPos);
+      controls.target.copy(initialControlsTarget);
+      controls.update();
+
+      if (btnVaultExit) btnVaultExit.hidden = true;
+    });
   });
 }
 
@@ -276,6 +294,7 @@ if (btnVaultExit) {
     exitVault();
   });
 }
+
 
 // ─── CÁMARA INICIAL ───────────────────────────────────────────────────────────
 let currentMobileIndex = 0;
@@ -454,7 +473,7 @@ let pointerDownPos = { x: 0, y: 0 };
 canvas.addEventListener('pointerdown', (e) => { pointerDownPos = { x: e.clientX, y: e.clientY }; });
 
 canvas.addEventListener('pointerup', (e) => {
-  if (isUIOpen() || isTransitioning) return;
+  if (isUIOpen() || isTransitioning || _portalActivating || _exitActivatingFlag) return;
   const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
   if (dist > 7) return;
 
