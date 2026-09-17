@@ -3,6 +3,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { cabinetsConfig } from './content.js';
 import { Cabinet } from './cabinets.js';
 import { openPanel, closePanel, setFocus, isUIOpen } from './ui.js';
+import { DownloadsZone } from './downloads/DownloadsZone.js';
+import { onMuteChange, toggleMute } from './downloads/audio.js';
 
 // --- Loading Screen Manager (Addendum R2, Sec. 2) ---
 const loadingScreen = document.getElementById('loading-screen');
@@ -92,6 +94,25 @@ cabinetsConfig.forEach((config, i) => {
   scene.add(cabinet);
   cabinets.push(cabinet);
 });
+
+// --- Zona Secreta de Downloads (Cartuchos 3D) ---
+const downloadsZone = new DownloadsZone();
+scene.add(downloadsZone);
+
+// --- Control de Audio Retro Chiptune ---
+const audioBtn = document.getElementById('btn-audio-toggle');
+const audioIcon = document.getElementById('audio-icon');
+if (audioBtn) {
+  onMuteChange((muted) => {
+    if (audioIcon) audioIcon.textContent = muted ? '🔇' : '🔊';
+    audioBtn.classList.toggle('muted', muted);
+    audioBtn.setAttribute('title', muted ? 'Sonido 8-bit: Silenciado' : 'Sonido 8-bit: Activo');
+  });
+  audioBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMute();
+  });
+}
 
 // Posición inicial de cámara
 let currentMobileIndex = 0;
@@ -290,15 +311,44 @@ export function focusCabinet(index) {
   }
 }
 
+export function focusDownloadsZone(targetCoords) {
+  if (isUIOpen() || isTransitioning) return;
+  activeCabinetIndex = -1;
+  currentMobileIndex = 4;
+  updateMobileAffordance(4);
+
+  const target = targetCoords || downloadsZone.getWorldTarget();
+  sourcePos.copy(camera.position);
+  sourceTarget.copy(controls.target);
+  targetPos.copy(target.pos);
+  targetTarget.copy(target.look);
+
+  transitionDuration = 950;
+  if (prefersReducedMotion) {
+    camera.position.copy(targetPos);
+    controls.target.copy(targetTarget);
+  } else {
+    isTransitioning = true;
+    transitionProgress = 0;
+    controls.enabled = false;
+  }
+}
+
 export function resetCamera() {
   activeCabinetIndex = -1;
   sourcePos.copy(camera.position);
   sourceTarget.copy(controls.target);
 
   if (isMobile) {
-    const cabX = cabinets[currentMobileIndex].position.x;
-    targetPos.set(cabX, 2.05, 4.4);
-    targetTarget.set(cabX, 1.75, 0);
+    if (currentMobileIndex === 4) {
+      const target = downloadsZone.getWorldTarget();
+      targetPos.copy(target.pos);
+      targetTarget.copy(target.look);
+    } else {
+      const cabX = cabinets[currentMobileIndex].position.x;
+      targetPos.set(cabX, 2.05, 4.4);
+      targetTarget.set(cabX, 1.75, 0);
+    }
   } else {
     targetPos.copy(initialCameraPos);
     targetTarget.copy(initialControlsTarget);
@@ -326,9 +376,18 @@ const mobileTapHint = document.getElementById('mobile-tap-hint');
 
 function updateMobileAffordance(index) {
   if (!mobileTapHint) return;
-  const config = cabinetsConfig[index];
-  mobileTapHint.style.setProperty('--hint-color', config.colorHex);
-  mobileTapHint.style.setProperty('--hint-glow', config.colorHex + '66');
+  if (index === 4) {
+    mobileTapHint.textContent = "DESCARGAS 3D";
+    mobileTapHint.style.setProperty('--hint-color', '#7c4fd6');
+    mobileTapHint.style.setProperty('--hint-glow', 'rgba(124, 79, 214, 0.4)');
+  } else {
+    mobileTapHint.textContent = "TOCA PARA ENTRAR";
+    const config = cabinetsConfig[index];
+    if (config) {
+      mobileTapHint.style.setProperty('--hint-color', config.colorHex);
+      mobileTapHint.style.setProperty('--hint-glow', config.colorHex + '66');
+    }
+  }
   mobileTapHint.classList.remove('bounce-trigger');
   void mobileTapHint.offsetWidth; // Trigger reflow
   mobileTapHint.classList.add('bounce-trigger');
@@ -337,14 +396,22 @@ function updateMobileAffordance(index) {
 export function goToMobileCabinet(targetIndex) {
   if (isUIOpen() || isTransitioning) return;
 
-  currentMobileIndex = (targetIndex + cabinets.length) % cabinets.length;
+  const totalStops = cabinets.length + 1;
+  currentMobileIndex = (targetIndex + totalStops) % totalStops;
   updateMobileAffordance(currentMobileIndex);
 
-  const cabX = cabinets[currentMobileIndex].position.x;
   sourcePos.copy(camera.position);
   sourceTarget.copy(controls.target);
-  targetPos.set(cabX, 2.05, 4.4);
-  targetTarget.set(cabX, 1.75, 0);
+
+  if (currentMobileIndex === 4) {
+    const target = downloadsZone.getWorldTarget();
+    targetPos.copy(target.pos);
+    targetTarget.copy(target.look);
+  } else {
+    const cabX = cabinets[currentMobileIndex].position.x;
+    targetPos.set(cabX, 2.05, 4.4);
+    targetTarget.set(cabX, 1.75, 0);
+  }
 
   transitionDuration = 650;
 
@@ -375,7 +442,11 @@ if (btnNextCab) {
 if (mobileTapHint) {
   mobileTapHint.addEventListener('click', (e) => {
     e.stopPropagation();
-    focusCabinet(currentMobileIndex);
+    if (currentMobileIndex === 4) {
+      focusDownloadsZone();
+    } else {
+      focusCabinet(currentMobileIndex);
+    }
   });
   updateMobileAffordance(0);
 }
@@ -428,6 +499,16 @@ canvas.addEventListener('pointerup', (e) => {
   mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
   raycaster.setFromCamera(mouse, camera);
+
+  // Interacción con Zona de Descargas / Cartuchos
+  const dlHit = downloadsZone.handleClick(raycaster, prefersReducedMotion);
+  if (dlHit) {
+    if (dlHit.type === 'machine' && !isTransitioning) {
+      focusDownloadsZone(dlHit.position);
+    }
+    return;
+  }
+
   const hitboxes = cabinets.map(c => c.hitbox);
   const intersects = raycaster.intersectObjects(hitboxes);
 
@@ -446,6 +527,14 @@ canvas.addEventListener('mousemove', (e) => {
   mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
   raycaster.setFromCamera(mouse, camera);
+
+  // Hover en Zona de Descargas
+  const hoveredCart = downloadsZone.handlePointerMove(raycaster);
+  if (hoveredCart) {
+    canvas.style.cursor = 'pointer';
+    return;
+  }
+
   const hitboxes = cabinets.map(c => c.hitbox);
   const intersects = raycaster.intersectObjects(hitboxes);
 
@@ -501,6 +590,9 @@ function animate() {
 
   // Actualizar cabinas
   cabinets.forEach(cab => cab.update(dt, prefersReducedMotion));
+
+  // Actualizar zona de descargas (máquina expendedora, cartuchos 3D y audio ambiental)
+  downloadsZone.update(dt, time, camera.position, prefersReducedMotion);
 
   // Animación de partículas atmosféricas
   if (!prefersReducedMotion) {
